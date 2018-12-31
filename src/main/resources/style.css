@@ -1,0 +1,12 @@
+.center-bottom, .left, .top {
+    -fx-padding: 10;
+    -fx-spacing: 10;
+}
+
+.anchor-pane, .center, .center-bottom, .center-top, .left, .top {
+    -fx-border-color: black;
+}
+
+.center-bottom .button, .center-top .button, .left .toggle-button {
+    -fx-max-width: Infinity;
+}

@@ -2,16 +2,16 @@ package schedule;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Pane root = new Pane();
+        Scene scene = new Scene(new Layout());
+        scene.getStylesheets().add("style.css");
         primaryStage.setTitle("Terminarz");
-        primaryStage.setScene(new Scene(root, 200, 200));
+        primaryStage.setScene(scene);
         primaryStage.show();
     }
 

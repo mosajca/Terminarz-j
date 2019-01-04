@@ -1,4 +1,4 @@
-package schedule;
+package schedule.database;
 
 import org.apache.commons.dbutils.QueryRunner;
 import org.h2.jdbcx.JdbcDataSource;

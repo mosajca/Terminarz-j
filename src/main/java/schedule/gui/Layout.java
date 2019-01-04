@@ -1,10 +1,18 @@
-package schedule;
+package schedule.gui;
 
+import java.sql.SQLException;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
@@ -15,20 +23,29 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
+import schedule.database.Database;
+import schedule.database.Event;
+
 public class Layout extends BorderPane {
 
+    private Database database;
     private List<AnchorPane> anchorPanes = new ArrayList<>();
+    private Button add = new Button("dodaj");
 
-    public Layout() {
+    public Layout(Database database) {
+        this.database = database;
         setTop(createTop());
         setLeft(createLeft());
         setCenter(createCenter());
     }
 
+    public void setAddButtonAction(EventHandler<ActionEvent> action) {
+        add.setOnAction(action);
+    }
+
     private HBox createTop() {
         HBox top = new HBox();
         top.getStyleClass().add("top");
-        Button add = new Button("dodaj");
         Region region = new Region();
         HBox.setHgrow(region, Priority.ALWAYS);
         top.getChildren().addAll(region, add);
@@ -44,6 +61,7 @@ public class Layout extends BorderPane {
             toggleButton.setToggleGroup(toggleGroup);
             left.getChildren().add(toggleButton);
         }
+        setThisWeekAction(left.getChildren().get(2));
         return left;
     }
 
@@ -95,6 +113,30 @@ public class Layout extends BorderPane {
             top.getChildren().add(button);
         }
         return top;
+    }
+
+    private Label createEventLabel(Event event) {
+        Label label = new Label(event.getName());
+        long top = ChronoUnit.MINUTES.between(LocalTime.of(0, 0), event.getStartDateTime().toLocalTime());
+        AnchorPane.setTopAnchor(label, top * 2.0);
+        AnchorPane.setLeftAnchor(label, 0.0);
+        AnchorPane.setRightAnchor(label, 0.0);
+        long height = ChronoUnit.MINUTES.between(event.getStartDateTime(), event.getEndDateTime());
+        label.setPrefHeight(height * 2);
+        return label;
+    }
+
+    private void setThisWeekAction(Node node) {
+        node.setOnMouseClicked(event -> {
+            try {
+                List<Event> events = database.selectEventWhereWeek(OffsetDateTime.now());
+                for (Event e : events) {
+                    anchorPanes.get(e.getStartDateTime().getDayOfWeek().getValue() - 1)
+                            .getChildren().add(createEventLabel(e));
+                }
+            } catch (SQLException e) {
+            }
+        });
     }
 
 }

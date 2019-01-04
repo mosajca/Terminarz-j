@@ -1,4 +1,4 @@
-package schedule;
+package schedule.database;
 
 import java.time.OffsetDateTime;
 

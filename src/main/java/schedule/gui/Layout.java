@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -29,18 +27,15 @@ import schedule.database.Event;
 public class Layout extends BorderPane {
 
     private Database database;
+    private EventWindow eventWindow;
     private List<AnchorPane> anchorPanes = new ArrayList<>();
-    private Button add = new Button("dodaj");
 
     public Layout(Database database) {
         this.database = database;
+        eventWindow = new EventWindow(database);
         setTop(createTop());
         setLeft(createLeft());
         setCenter(createCenter());
-    }
-
-    public void setAddButtonAction(EventHandler<ActionEvent> action) {
-        add.setOnAction(action);
     }
 
     private HBox createTop() {
@@ -48,6 +43,8 @@ public class Layout extends BorderPane {
         top.getStyleClass().add("top");
         Region region = new Region();
         HBox.setHgrow(region, Priority.ALWAYS);
+        Button add = new Button("dodaj");
+        add.setOnAction(e -> eventWindow.resetAndShow());
         top.getChildren().addAll(region, add);
         return top;
     }
@@ -76,9 +73,21 @@ public class Layout extends BorderPane {
 
     private ScrollPane createCenterCenter() {
         HBox hbox = new HBox();
+        AnchorPane time = new AnchorPane();
+        anchorPanes.add(time);
+        hbox.getChildren().add(time);
+        for (int i = 0; i < 24; ++i) {
+            Label label = new Label(String.format("%02d:00", i));
+            label.getStyleClass().add("time");
+            AnchorPane.setTopAnchor(label, i * 120.0);
+            AnchorPane.setLeftAnchor(label, 0.0);
+            AnchorPane.setRightAnchor(label, 0.0);
+            time.getChildren().add(label);
+        }
         for (int i = 0; i < 7; ++i) {
             AnchorPane anchorPane = new AnchorPane();
             anchorPane.getStyleClass().add("anchor-pane");
+            anchorPane.prefWidthProperty().bind(hbox.widthProperty().divide(8));
             HBox.setHgrow(anchorPane, Priority.ALWAYS);
             anchorPanes.add(anchorPane);
             hbox.getChildren().add(anchorPane);
@@ -104,7 +113,12 @@ public class Layout extends BorderPane {
     private HBox createCenterTop() {
         HBox top = new HBox();
         top.getStyleClass().add("center-top");
-        int i = 0;
+        Region region = new Region();
+        HBox.setHgrow(region, Priority.ALWAYS);
+        region.maxWidthProperty().bind(anchorPanes.get(0).widthProperty());
+        region.prefWidthProperty().bind(anchorPanes.get(0).widthProperty());
+        top.getChildren().add(region);
+        int i = 1;
         for (String s : Arrays.asList("Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela")) {
             Button button = new Button(s);
             HBox.setHgrow(button, Priority.ALWAYS);
@@ -117,6 +131,7 @@ public class Layout extends BorderPane {
 
     private Label createEventLabel(Event event) {
         Label label = new Label(event.getName());
+        label.setOnMouseClicked(e -> eventWindow.fillAndShow(event));
         long top = ChronoUnit.MINUTES.between(LocalTime.of(0, 0), event.getStartDateTime().toLocalTime());
         AnchorPane.setTopAnchor(label, top * 2.0);
         AnchorPane.setLeftAnchor(label, 0.0);
@@ -128,10 +143,11 @@ public class Layout extends BorderPane {
 
     private void setThisWeekAction(Node node) {
         node.setOnMouseClicked(event -> {
+            anchorPanes.stream().skip(1).forEach(a -> a.getChildren().clear());
             try {
                 List<Event> events = database.selectEventWhereWeek(OffsetDateTime.now());
                 for (Event e : events) {
-                    anchorPanes.get(e.getStartDateTime().getDayOfWeek().getValue() - 1)
+                    anchorPanes.get(e.getStartDateTime().getDayOfWeek().getValue())
                             .getChildren().add(createEventLabel(e));
                 }
             } catch (SQLException e) {

@@ -1,17 +1,22 @@
 package schedule;
 
 import javafx.application.Application;
+import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import schedule.database.Database;
-import schedule.gui.GUI;
+import schedule.gui.Layout;
 
 public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        GUI gui = new GUI(primaryStage, new Database());
-        gui.show();
+        Layout layout = new Layout(new Database());
+        Scene scene = new Scene(layout);
+        scene.getStylesheets().add("style.css");
+        primaryStage.setTitle("Terminarz");
+        primaryStage.setScene(scene);
+        primaryStage.show();
     }
 
     public static void main(String[] args) {

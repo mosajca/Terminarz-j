@@ -29,6 +29,7 @@ public class Layout extends BorderPane {
 
     private Database database;
     private EventWindow eventWindow;
+    private UpcomingWindow upcomingWindow;
     private OffsetDateTime current;
     private List<AnchorPane> weekAnchorPanes = new ArrayList<>();
     private boolean week = true;
@@ -36,6 +37,7 @@ public class Layout extends BorderPane {
     public Layout(Database database) {
         this.database = database;
         eventWindow = new EventWindow(database);
+        upcomingWindow = new UpcomingWindow(database);
         setTop(createTop());
         setLeft(createLeft());
         setCenter(createCenter());
@@ -48,7 +50,9 @@ public class Layout extends BorderPane {
         HBox.setHgrow(region, Priority.ALWAYS);
         Button add = new Button("dodaj");
         add.setOnAction(e -> eventWindow.resetAndShow());
-        top.getChildren().addAll(region, add);
+        Button upcoming = new Button("nadchodzące");
+        upcoming.setOnAction(e -> upcomingWindow.showEvents());
+        top.getChildren().addAll(region, upcoming, add);
         return top;
     }
 

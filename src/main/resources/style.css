@@ -16,6 +16,7 @@
     -fx-border-color: black;
     -fx-text-fill: white;
     -fx-padding: 5;
+    -fx-min-height: 0;
 }
 
 .time {

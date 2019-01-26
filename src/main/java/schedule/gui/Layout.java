@@ -1,14 +1,18 @@
 package schedule.gui;
 
 import java.sql.SQLException;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -18,6 +22,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
 
 import schedule.database.Database;
 import schedule.database.Event;
@@ -28,7 +33,7 @@ public class Layout extends BorderPane {
     private EventWindow eventWindow;
     private UpcomingWindow upcomingWindow;
     private OffsetDateTime current;
-    private Button lastClicked;
+    private Label date = new Label();
     private List<AnchorPane> weekAnchorPanes = new ArrayList<>();
     private boolean week = true;
 
@@ -36,7 +41,7 @@ public class Layout extends BorderPane {
         this.database = database;
         eventWindow = new EventWindow(database);
         upcomingWindow = new UpcomingWindow(database);
-        eventWindow.setOnHidden(e -> lastClicked.fire());
+        eventWindow.setOnHidden(e -> refresh());
         setTop(createTop());
         setCenter(createCenter());
         setLeft(createLeft());
@@ -44,6 +49,7 @@ public class Layout extends BorderPane {
 
     private HBox createTop() {
         HBox top = new HBox();
+        top.setAlignment(Pos.CENTER);
         top.getStyleClass().add("top");
         Region region = new Region();
         HBox.setHgrow(region, Priority.ALWAYS);
@@ -51,7 +57,8 @@ public class Layout extends BorderPane {
         add.setOnAction(e -> eventWindow.resetAndShow());
         Button upcoming = new Button("nadchodzące");
         upcoming.setOnAction(e -> upcomingWindow.showEvents());
-        top.getChildren().addAll(region, upcoming, add);
+        date.setFont(Font.font(20));
+        top.getChildren().addAll(date, region, upcoming, add);
         return top;
     }
 
@@ -100,6 +107,14 @@ public class Layout extends BorderPane {
             anchorPane.managedProperty().bind(anchorPane.visibleProperty());
             weekAnchorPanes.add(anchorPane);
             hbox.getChildren().add(anchorPane);
+            for (int j = 1; j < 24; ++j) {
+                Region region = new Region();
+                region.setStyle("-fx-border-style: solid centered");
+                AnchorPane.setTopAnchor(region, j * 120.0);
+                AnchorPane.setLeftAnchor(region, 0.0);
+                AnchorPane.setRightAnchor(region, 0.0);
+                anchorPane.getChildren().add(region);
+            }
         }
         ScrollPane scrollPane = new ScrollPane(hbox);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
@@ -121,12 +136,7 @@ public class Layout extends BorderPane {
             try {
                 weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(week));
                 current = current.minusDays(week ? 7 : 1);
-                if (week) {
-                    showEvents(database.selectEventWhereWeek(current));
-                } else {
-                    weekAnchorPanes.get(current.getDayOfWeek().getValue()).setVisible(true);
-                    showEvents(database.selectEventWhereDay(current));
-                }
+                showEvents();
             } catch (SQLException e) {
             }
         });
@@ -135,12 +145,7 @@ public class Layout extends BorderPane {
             try {
                 weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(week));
                 current = current.plusDays(week ? 7 : 1);
-                if (week) {
-                    showEvents(database.selectEventWhereWeek(current));
-                } else {
-                    weekAnchorPanes.get(current.getDayOfWeek().getValue()).setVisible(true);
-                    showEvents(database.selectEventWhereDay(current));
-                }
+                showEvents();
             } catch (SQLException e) {
             }
         });
@@ -160,10 +165,22 @@ public class Layout extends BorderPane {
             Button button = new Button(s);
             button.setUserData(i);
             button.setOnAction(event -> {
-                week = false;
-                current = current.plusDays((int) button.getUserData() - current.getDayOfWeek().getValue());
-                weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(false));
-                weekAnchorPanes.get((int) button.getUserData()).setVisible(true);
+                if (week) {
+                    week = false;
+                    current = current.plusDays((int) button.getUserData() - current.getDayOfWeek().getValue());
+                    date.setText(current.toLocalDate().toString());
+                    weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(false));
+                    weekAnchorPanes.get((int) button.getUserData()).setVisible(true);
+                } else {
+                    week = true;
+                    try {
+                        showEvents(database.selectEventWhereWeek(current));
+                        weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(true));
+                        date.setText(current.toLocalDate().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toString()
+                                + " - " + current.toLocalDate().with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).toString());
+                    } catch (SQLException e) {
+                    }
+                }
             });
             HBox.setHgrow(button, Priority.ALWAYS);
             button.managedProperty().bind(button.visibleProperty());
@@ -189,7 +206,9 @@ public class Layout extends BorderPane {
 
     private void setWeekAction(Button button, Supplier<OffsetDateTime> dateTimeSupplier) {
         button.setOnAction(event -> {
-            lastClicked = button;
+            LocalDate d = dateTimeSupplier.get().toLocalDate();
+            date.setText(d.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toString()
+                    + " - " + d.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).toString());
             weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(true));
             week = true;
             try {
@@ -202,7 +221,7 @@ public class Layout extends BorderPane {
 
     private void setDayAction(Button button, Supplier<OffsetDateTime> dateTimeSupplier) {
         button.setOnAction(event -> {
-            lastClicked = button;
+            date.setText(dateTimeSupplier.get().toLocalDate().toString());
             weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(false));
             week = false;
             try {
@@ -215,9 +234,32 @@ public class Layout extends BorderPane {
     }
 
     private void showEvents(List<Event> events) {
-        weekAnchorPanes.stream().skip(1).forEach(a -> a.getChildren().clear());
+        weekAnchorPanes.stream().skip(1).forEach(a -> a.getChildren().removeIf(x -> x instanceof Label));
         for (Event e : events) {
             weekAnchorPanes.get(e.getStartDateTime().getDayOfWeek().getValue()).getChildren().add(createEventLabel(e));
+        }
+    }
+
+    private void showEvents() throws SQLException {
+        if (week) {
+            showEvents(database.selectEventWhereWeek(current));
+            date.setText(current.toLocalDate().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toString()
+                    + " - " + current.toLocalDate().with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).toString());
+        } else {
+            weekAnchorPanes.get(current.getDayOfWeek().getValue()).setVisible(true);
+            showEvents(database.selectEventWhereDay(current));
+            date.setText(current.toLocalDate().toString());
+        }
+    }
+
+    private void refresh() {
+        try {
+            if (week) {
+                showEvents(database.selectEventWhereWeek(current));
+            } else {
+                showEvents(database.selectEventWhereDay(current));
+            }
+        } catch (SQLException e) {
         }
     }
 

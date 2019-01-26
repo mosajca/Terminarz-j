@@ -95,8 +95,13 @@ public class EventWindow extends Stage {
     private Button createButtonInsert() {
         return createButton("Dodaj", e -> {
             try {
-                database.insertEvent(createEvent());
-                hide();
+                Event event = createEvent();
+                if (overlap(event) || wrongTime(event)) {
+                    popup.show(this);
+                } else {
+                    database.insertEvent(event);
+                    hide();
+                }
             } catch (SQLException ex) {
                 popup.show(this);
             }
@@ -106,8 +111,13 @@ public class EventWindow extends Stage {
     private Button createButtonUpdate() {
         return createButton("Aktualizuj", e -> {
             try {
-                database.updateEvent(updateEvent());
-                hide();
+                Event event = updateEvent();
+                if (overlap(event) || wrongTime(event)) {
+                    popup.show(this);
+                } else {
+                    database.updateEvent(event);
+                    hide();
+                }
             } catch (SQLException ex) {
                 popup.show(this);
             }
@@ -123,6 +133,17 @@ public class EventWindow extends Stage {
                 popup.show(this);
             }
         });
+    }
+
+    private boolean overlap(Event y) throws SQLException {
+        return database.selectEventWhereDay(y.getStartDateTime()).stream()
+                .anyMatch(x -> !x.getId().equals(y.getId())
+                        && x.getStartDateTime().isBefore(y.getEndDateTime())
+                        && y.getStartDateTime().isBefore(x.getEndDateTime()));
+    }
+
+    private boolean wrongTime(Event e) {
+        return e.getStartDateTime().isAfter(e.getEndDateTime()) || e.getStartDateTime().isEqual(e.getEndDateTime());
     }
 
     private Event createEvent() {

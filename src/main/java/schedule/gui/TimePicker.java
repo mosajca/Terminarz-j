@@ -5,6 +5,7 @@ import javafx.scene.control.SpinnerValueFactory;
 import javafx.util.converter.LocalTimeStringConverter;
 
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 
 public class TimePicker extends Spinner<LocalTime> {
 
@@ -17,7 +18,7 @@ public class TimePicker extends Spinner<LocalTime> {
 
     public void setValue(LocalTime time) {
         valueFactory.reset();
-        valueFactory.setValue(time);
+        valueFactory.setValue(time.truncatedTo(ChronoUnit.MINUTES));
     }
 
     private static class TimeSpinnerValueFactory extends SpinnerValueFactory<LocalTime> {
@@ -26,7 +27,7 @@ public class TimePicker extends Spinner<LocalTime> {
 
         TimeSpinnerValueFactory() {
             setConverter(new LocalTimeStringConverter());
-            setValue(LocalTime.now());
+            setValue(LocalTime.now().truncatedTo(ChronoUnit.MINUTES));
         }
 
         @Override

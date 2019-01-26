@@ -27,7 +27,7 @@ public class EventDB {
         String sql = "CREATE TABLE IF NOT EXISTS event("
                 + "id IDENTITY PRIMARY KEY,"
                 + "name NVARCHAR(255),"
-                + "description NVARCHAR(255),"
+                + "description NVARCHAR(511),"
                 + "startDateTime TIMESTAMP WITH TIME ZONE,"
                 + "endDateTime TIMESTAMP WITH TIME ZONE"
                 + ")";

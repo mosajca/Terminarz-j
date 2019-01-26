@@ -9,12 +9,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.ToggleButton;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -31,6 +28,7 @@ public class Layout extends BorderPane {
     private EventWindow eventWindow;
     private UpcomingWindow upcomingWindow;
     private OffsetDateTime current;
+    private Button lastClicked;
     private List<AnchorPane> weekAnchorPanes = new ArrayList<>();
     private boolean week = true;
 
@@ -38,9 +36,10 @@ public class Layout extends BorderPane {
         this.database = database;
         eventWindow = new EventWindow(database);
         upcomingWindow = new UpcomingWindow(database);
+        eventWindow.setOnHidden(e -> lastClicked.fire());
         setTop(createTop());
-        setLeft(createLeft());
         setCenter(createCenter());
+        setLeft(createLeft());
     }
 
     private HBox createTop() {
@@ -59,16 +58,14 @@ public class Layout extends BorderPane {
     private VBox createLeft() {
         VBox left = new VBox();
         left.getStyleClass().add("left");
-        ToggleGroup toggleGroup = new ToggleGroup();
         for (String s : Arrays.asList("dzisiaj", "jutro", "w tym tygodniu", "w następnym tygodniu")) {
-            ToggleButton toggleButton = new ToggleButton(s);
-            toggleButton.setToggleGroup(toggleGroup);
-            left.getChildren().add(toggleButton);
+            left.getChildren().add(new Button(s));
         }
-        setDayAction(left.getChildren().get(0), OffsetDateTime::now);
-        setDayAction(left.getChildren().get(1), () -> OffsetDateTime.now().plusDays(1));
-        setWeekAction(left.getChildren().get(2), OffsetDateTime::now);
-        setWeekAction(left.getChildren().get(3), () -> OffsetDateTime.now().plusDays(7));
+        setDayAction((Button) left.getChildren().get(0), OffsetDateTime::now);
+        setDayAction((Button) left.getChildren().get(1), () -> OffsetDateTime.now().plusDays(1));
+        setWeekAction((Button) left.getChildren().get(2), OffsetDateTime::now);
+        setWeekAction((Button) left.getChildren().get(3), () -> OffsetDateTime.now().plusDays(7));
+        ((Button) left.getChildren().get(2)).fire();
         return left;
     }
 
@@ -84,6 +81,7 @@ public class Layout extends BorderPane {
     private ScrollPane createCenterCenter() {
         HBox hbox = new HBox();
         AnchorPane time = new AnchorPane();
+        time.getStyleClass().add("time-anchor-pane");
         weekAnchorPanes.add(time);
         hbox.getChildren().add(time);
         for (int i = 0; i < 24; ++i) {
@@ -106,7 +104,7 @@ public class Layout extends BorderPane {
         ScrollPane scrollPane = new ScrollPane(hbox);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
         scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true);
+        scrollPane.setVvalue(scrollPane.getVmax() / 2);
         return scrollPane;
     }
 
@@ -189,8 +187,9 @@ public class Layout extends BorderPane {
         return label;
     }
 
-    private void setWeekAction(Node node, Supplier<OffsetDateTime> dateTimeSupplier) {
-        node.setOnMouseClicked(event -> {
+    private void setWeekAction(Button button, Supplier<OffsetDateTime> dateTimeSupplier) {
+        button.setOnAction(event -> {
+            lastClicked = button;
             weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(true));
             week = true;
             try {
@@ -201,8 +200,9 @@ public class Layout extends BorderPane {
         });
     }
 
-    private void setDayAction(Node node, Supplier<OffsetDateTime> dateTimeSupplier) {
-        node.setOnMouseClicked(event -> {
+    private void setDayAction(Button button, Supplier<OffsetDateTime> dateTimeSupplier) {
+        button.setOnAction(event -> {
+            lastClicked = button;
             weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(false));
             week = false;
             try {

@@ -1,6 +1,7 @@
 package schedule.database;
 
 import java.time.OffsetDateTime;
+import java.util.Objects;
 
 public class Event {
 
@@ -63,6 +64,23 @@ public class Event {
 
     public void setEndDateTime(OffsetDateTime endDateTime) {
         this.endDateTime = endDateTime;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Event event = (Event) o;
+        return Objects.equals(id, event.id) &&
+                Objects.equals(name, event.name) &&
+                Objects.equals(description, event.description) &&
+                Objects.equals(startDateTime, event.startDateTime) &&
+                Objects.equals(endDateTime, event.endDateTime);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, description, startDateTime, endDateTime);
     }
 
 }

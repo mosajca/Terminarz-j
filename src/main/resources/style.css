@@ -3,16 +3,17 @@
     -fx-spacing: 10;
 }
 
-.anchor-pane, .center, .center-bottom, .center-top, .left, .top {
+.anchor-pane, .center, .center-bottom, .center-top, .left, .time-anchor-pane, .top {
     -fx-border-color: black;
 }
 
-.center-bottom .button, .center-top .button, .left .toggle-button {
+.center-bottom .button, .center-top .button, .left .button {
     -fx-max-width: Infinity;
 }
 
 .anchor-pane .label {
     -fx-background-color: green;
+    -fx-border-color: black;
     -fx-text-fill: white;
     -fx-padding: 5;
 }

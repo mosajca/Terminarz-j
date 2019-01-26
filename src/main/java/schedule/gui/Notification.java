@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +26,7 @@ public class Notification extends Stage {
 
     private double x, y;
     private Database database;
+    private Event lastShown;
     private ScheduledExecutorService executorService;
     private Label label = new Label();
     private DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm");
@@ -60,11 +62,17 @@ public class Notification extends Stage {
         executorService = Executors.newSingleThreadScheduledExecutor();
         executorService.scheduleAtFixedRate(() -> {
             OffsetDateTime now = OffsetDateTime.now();
+            OffsetDateTime nowPlusMinutes10 = now.plusMinutes(10);
             try {
-                String str = database.selectEventWhereDay(now).stream()
+                List<Event> events = database.selectEventWhereDay(now);
+                if (now.getDayOfYear() != nowPlusMinutes10.getDayOfYear()) {
+                    events.addAll(database.selectEventWhereDay(nowPlusMinutes10));
+                }
+                String str = events.stream()
                         .filter(e -> e.getStartDateTime().isAfter(now)
                                 && e.getStartDateTime().isBefore(now.plusMinutes(10)))
                         .min(Comparator.comparing(Event::getStartDateTime))
+                        .map(e -> e.equals(lastShown) ? null : (lastShown = e))
                         .map(e -> e.getName() + "\no godzinie: " + e.getStartDateTime().toLocalTime().format(dtf))
                         .orElse("");
                 if (!str.isEmpty()) Platform.runLater(() -> show(str));

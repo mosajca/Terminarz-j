@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,7 +31,7 @@ public class UpcomingWindow extends Stage {
         setTitle("Nadchodzące wydarzenia");
         initModality(Modality.APPLICATION_MODAL);
         setScene(new Scene(new ScrollPane(vbox)));
-        sizeToScene();
+        minWidthProperty().bind(titleProperty().length().multiply(10));
     }
 
     public void showEvents() {
@@ -38,6 +39,7 @@ public class UpcomingWindow extends Stage {
         for (Event event : getEvents()) {
             vbox.getChildren().add(createLabel(event));
         }
+        sizeToScene();
         super.show();
     }
 
@@ -49,6 +51,7 @@ public class UpcomingWindow extends Stage {
             events.addAll(database.selectEventWhereDay(tomorrow));
             return events.stream()
                     .filter(e -> e.getStartDateTime().isAfter(today) && e.getStartDateTime().isBefore(tomorrow))
+                    .sorted(Comparator.comparing(Event::getStartDateTime))
                     .collect(Collectors.toList());
         } catch (SQLException e) {
         }

@@ -8,12 +8,14 @@ import java.time.ZoneOffset;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -50,6 +52,8 @@ public class EventWindow extends Stage {
         insert = createButtonInsert();
         update = createButtonUpdate();
         delete = createButtonDelete();
+        name.setTextFormatter(new TextFormatter<String>(c -> c.getControlNewText().length() < 256 ? c : null));
+        description.setTextFormatter(new TextFormatter<String>(c -> c.getControlNewText().length() < 512 ? c : null));
         setTitle("Wydarzenie");
         initModality(Modality.APPLICATION_MODAL);
         setScene(new Scene(createRoot()));
@@ -92,6 +96,7 @@ public class EventWindow extends Stage {
         return createButton("Dodaj", e -> {
             try {
                 database.insertEvent(createEvent());
+                hide();
             } catch (SQLException ex) {
                 popup.show(this);
             }
@@ -102,6 +107,7 @@ public class EventWindow extends Stage {
         return createButton("Aktualizuj", e -> {
             try {
                 database.updateEvent(updateEvent());
+                hide();
             } catch (SQLException ex) {
                 popup.show(this);
             }
@@ -112,6 +118,7 @@ public class EventWindow extends Stage {
         return createButton("Usuń", e -> {
             try {
                 database.deleteEvent(event);
+                hide();
             } catch (SQLException ex) {
                 popup.show(this);
             }
@@ -135,6 +142,9 @@ public class EventWindow extends Stage {
     private Popup createPopup() {
         Popup popup = new Popup();
         Label label = new Label("Wystąpił błąd.");
+        label.setPadding(new Insets(10));
+        label.setStyle("-fx-background-color: yellow; -fx-border-color: black");
+        label.setOnMouseClicked(e -> popup.hide());
         label.setFont(Font.font(25));
         popup.getContent().add(label);
         popup.setAutoHide(true);

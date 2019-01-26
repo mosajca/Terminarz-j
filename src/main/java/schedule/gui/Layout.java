@@ -2,7 +2,6 @@ package schedule.gui;
 
 import java.sql.SQLException;
 import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -12,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
-import javafx.geometry.Pos;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -23,6 +22,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import javafx.stage.StageStyle;
 
 import schedule.database.Database;
 import schedule.database.Event;
@@ -33,6 +33,7 @@ public class Layout extends BorderPane {
     private EventWindow eventWindow;
     private UpcomingWindow upcomingWindow;
     private OffsetDateTime current;
+    private Alert alert = new Alert(Alert.AlertType.ERROR);
     private Label date = new Label();
     private List<AnchorPane> weekAnchorPanes = new ArrayList<>();
     private boolean week = true;
@@ -42,6 +43,10 @@ public class Layout extends BorderPane {
         eventWindow = new EventWindow(database);
         upcomingWindow = new UpcomingWindow(database);
         eventWindow.setOnHidden(e -> refresh());
+        alert.setTitle("Wystąpił błąd.");
+        alert.setHeaderText(null);
+        alert.setContentText("Wystąpił błąd.");
+        alert.initStyle(StageStyle.UTILITY);
         setTop(createTop());
         setCenter(createCenter());
         setLeft(createLeft());
@@ -49,7 +54,6 @@ public class Layout extends BorderPane {
 
     private HBox createTop() {
         HBox top = new HBox();
-        top.setAlignment(Pos.CENTER);
         top.getStyleClass().add("top");
         Region region = new Region();
         HBox.setHgrow(region, Priority.ALWAYS);
@@ -109,7 +113,6 @@ public class Layout extends BorderPane {
             hbox.getChildren().add(anchorPane);
             for (int j = 1; j < 24; ++j) {
                 Region region = new Region();
-                region.setStyle("-fx-border-style: solid centered");
                 AnchorPane.setTopAnchor(region, j * 120.0);
                 AnchorPane.setLeftAnchor(region, 0.0);
                 AnchorPane.setRightAnchor(region, 0.0);
@@ -132,22 +135,12 @@ public class Layout extends BorderPane {
         HBox.setHgrow(next, Priority.ALWAYS);
         bottom.getChildren().addAll(prev, next);
         prev.setOnAction(event -> {
-            if (current == null) return;
-            try {
-                weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(week));
-                current = current.minusDays(week ? 7 : 1);
-                showEvents();
-            } catch (SQLException e) {
-            }
+            current = current.minusDays(week ? 7 : 1);
+            execute(this::showEvents);
         });
         next.setOnAction(event -> {
-            if (current == null) return;
-            try {
-                weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(week));
-                current = current.plusDays(week ? 7 : 1);
-                showEvents();
-            } catch (SQLException e) {
-            }
+            current = current.plusDays(week ? 7 : 1);
+            execute(this::showEvents);
         });
         return bottom;
     }
@@ -173,13 +166,9 @@ public class Layout extends BorderPane {
                     weekAnchorPanes.get((int) button.getUserData()).setVisible(true);
                 } else {
                     week = true;
-                    try {
-                        showEvents(database.selectEventWhereWeek(current));
-                        weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(true));
-                        date.setText(current.toLocalDate().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toString()
-                                + " - " + current.toLocalDate().with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).toString());
-                    } catch (SQLException e) {
-                    }
+                    weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(true));
+                    showWeekDate();
+                    execute(() -> showEvents(database.selectEventWhereWeek(current)));
                 }
             });
             HBox.setHgrow(button, Priority.ALWAYS);
@@ -206,30 +195,22 @@ public class Layout extends BorderPane {
 
     private void setWeekAction(Button button, Supplier<OffsetDateTime> dateTimeSupplier) {
         button.setOnAction(event -> {
-            LocalDate d = dateTimeSupplier.get().toLocalDate();
-            date.setText(d.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toString()
-                    + " - " + d.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).toString());
+            current = dateTimeSupplier.get();
+            showWeekDate();
             weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(true));
             week = true;
-            try {
-                current = dateTimeSupplier.get();
-                showEvents(database.selectEventWhereWeek(current));
-            } catch (SQLException e) {
-            }
+            execute(() -> showEvents(database.selectEventWhereWeek(current)));
         });
     }
 
     private void setDayAction(Button button, Supplier<OffsetDateTime> dateTimeSupplier) {
         button.setOnAction(event -> {
-            date.setText(dateTimeSupplier.get().toLocalDate().toString());
+            current = dateTimeSupplier.get();
+            date.setText(current.toLocalDate().toString());
             weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(false));
+            weekAnchorPanes.get(current.getDayOfWeek().getValue()).setVisible(true);
             week = false;
-            try {
-                current = dateTimeSupplier.get();
-                weekAnchorPanes.get(current.getDayOfWeek().getValue()).setVisible(true);
-                showEvents(database.selectEventWhereDay(current));
-            } catch (SQLException e) {
-            }
+            execute(() -> showEvents(database.selectEventWhereDay(current)));
         });
     }
 
@@ -241,10 +222,10 @@ public class Layout extends BorderPane {
     }
 
     private void showEvents() throws SQLException {
+        weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(week));
         if (week) {
             showEvents(database.selectEventWhereWeek(current));
-            date.setText(current.toLocalDate().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toString()
-                    + " - " + current.toLocalDate().with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).toString());
+            showWeekDate();
         } else {
             weekAnchorPanes.get(current.getDayOfWeek().getValue()).setVisible(true);
             showEvents(database.selectEventWhereDay(current));
@@ -252,14 +233,31 @@ public class Layout extends BorderPane {
         }
     }
 
+    private void showWeekDate() {
+        date.setText(current.toLocalDate().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toString()
+                + " - " + current.toLocalDate().with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).toString());
+    }
+
     private void refresh() {
-        try {
+        execute(() -> {
             if (week) {
                 showEvents(database.selectEventWhereWeek(current));
             } else {
                 showEvents(database.selectEventWhereDay(current));
             }
+        });
+    }
+
+    @FunctionalInterface
+    private interface SQLCommand {
+        void execute() throws SQLException;
+    }
+
+    private void execute(SQLCommand command) {
+        try {
+            command.execute();
         } catch (SQLException e) {
+            alert.show();
         }
     }
 

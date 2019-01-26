@@ -8,7 +8,6 @@ import java.time.ZoneOffset;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
@@ -19,7 +18,6 @@ import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.text.Font;
 import javafx.stage.Modality;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
@@ -54,9 +52,12 @@ public class EventWindow extends Stage {
         delete = createButtonDelete();
         name.setTextFormatter(new TextFormatter<String>(c -> c.getControlNewText().length() < 256 ? c : null));
         description.setTextFormatter(new TextFormatter<String>(c -> c.getControlNewText().length() < 512 ? c : null));
+        buttons.getStyleClass().add("buttons");
         setTitle("Wydarzenie");
         initModality(Modality.APPLICATION_MODAL);
-        setScene(new Scene(createRoot()));
+        Scene scene = new Scene(createRoot());
+        scene.getStylesheets().add("style.css");
+        setScene(scene);
         sizeToScene();
         setResizable(false);
         reset();
@@ -87,7 +88,6 @@ public class EventWindow extends Stage {
     private Button createButton(String text, EventHandler<ActionEvent> handler) {
         Button button = new Button(text);
         button.setOnAction(handler);
-        button.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(button, Priority.ALWAYS);
         return button;
     }
@@ -163,10 +163,8 @@ public class EventWindow extends Stage {
     private Popup createPopup() {
         Popup popup = new Popup();
         Label label = new Label("Wystąpił błąd.");
-        label.setPadding(new Insets(10));
-        label.setStyle("-fx-background-color: yellow; -fx-border-color: black");
+        label.getStyleClass().add("notification");
         label.setOnMouseClicked(e -> popup.hide());
-        label.setFont(Font.font(25));
         popup.getContent().add(label);
         popup.setAutoHide(true);
         return popup;

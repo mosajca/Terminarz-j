@@ -54,6 +54,7 @@ public class UpcomingWindow extends Stage {
                     .sorted(Comparator.comparing(Event::getStartDateTime))
                     .collect(Collectors.toList());
         } catch (SQLException e) {
+            vbox.getChildren().add(new Label("Wystąpił błąd."));
         }
         return Collections.emptyList();
     }

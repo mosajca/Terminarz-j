@@ -10,11 +10,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javafx.application.Platform;
-import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
-import javafx.scene.text.Font;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -34,14 +32,14 @@ public class Notification extends Stage {
     public Notification(Database database) {
         super(StageStyle.UNDECORATED);
         this.database = database;
+        label.getStyleClass().add("notification");
         label.setOnMouseClicked(e -> close());
-        label.setPadding(new Insets(10));
-        label.setStyle("-fx-background-color: yellow; -fx-border-color: black");
-        label.setFont(Font.font(25));
         Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();
         x = visualBounds.getMinX() + visualBounds.getWidth();
         y = visualBounds.getMinY() + visualBounds.getHeight();
-        setScene(new Scene(label));
+        Scene scene = new Scene(label);
+        scene.getStylesheets().add("style.css");
+        setScene(scene);
         setAlwaysOnTop(true);
         start();
     }
@@ -77,6 +75,7 @@ public class Notification extends Stage {
                         .orElse("");
                 if (!str.isEmpty()) Platform.runLater(() -> show(str));
             } catch (SQLException e1) {
+                Platform.runLater(() -> show("Wystąpił błąd."));
             }
         }, 10, 60, TimeUnit.SECONDS);
     }

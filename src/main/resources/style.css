@@ -7,7 +7,7 @@
     -fx-border-color: black;
 }
 
-.center-bottom .button, .center-top .button, .left .button {
+.center-bottom .button, .center-top .button, .left .button, .buttons .button {
     -fx-max-width: Infinity;
 }
 
@@ -19,9 +19,24 @@
     -fx-min-height: 0;
 }
 
+.anchor-pane Region {
+    -fx-border-style: solid centered;
+}
+
 .time {
     -fx-alignment: top-center;
     -fx-border-color: black;
     -fx-padding: 5;
     -fx-pref-height: 120;
+}
+
+.top {
+    -fx-alignment: center;
+}
+
+.notification {
+    -fx-padding: 10;
+    -fx-background-color: yellow;
+    -fx-border-color: black;
+    -fx-font-size: 25;
 }

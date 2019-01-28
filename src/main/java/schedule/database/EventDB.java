@@ -13,17 +13,17 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EventDB {
+class EventDB {
 
     private QueryRunner runner;
 
-    public EventDB() {
+    EventDB() {
         JdbcDataSource dataSource = new JdbcDataSource();
         dataSource.setURL("jdbc:h2:./database");
         runner = new QueryRunner(dataSource);
     }
 
-    public void createTableIfNotExists() throws SQLException {
+    void createTableIfNotExists() throws SQLException {
         String sql = "CREATE TABLE IF NOT EXISTS event("
                 + "id IDENTITY PRIMARY KEY,"
                 + "name NVARCHAR(255),"
@@ -34,27 +34,27 @@ public class EventDB {
         runner.update(sql);
     }
 
-    public Long insert(Event e) throws SQLException {
+    Long insert(Event e) throws SQLException {
         String sql = "INSERT INTO event (name, description, startDateTime, endDateTime) VALUES(?, ?, ?, ?)";
         return runner.insert(sql, this::toId, e.getName(), e.getDescription(), e.getStartDateTime(), e.getEndDateTime());
     }
 
-    public int update(Event e) throws SQLException {
+    int update(Event e) throws SQLException {
         String sql = "UPDATE event SET name = ?, description = ?, startDateTime = ?, endDateTime = ? WHERE id = ?";
         return runner.update(sql, e.getName(), e.getDescription(), e.getStartDateTime(), e.getEndDateTime(), e.getId());
     }
 
-    public int delete(Event e) throws SQLException {
+    int delete(Event e) throws SQLException {
         String sql = "DELETE FROM event WHERE id = ?";
         return runner.update(sql, e.getId());
     }
 
-    public List<Event> selectWhereDay(OffsetDateTime dateTime) throws SQLException {
+    List<Event> selectWhereDay(OffsetDateTime dateTime) throws SQLException {
         String sql = "SELECT * FROM event WHERE YEAR(startDateTime) = ? AND DAY_OF_YEAR(startDateTime) = ?";
         return runner.query(sql, this::toEventList, dateTime.getYear(), dateTime.getDayOfYear());
     }
 
-    public List<Event> selectWhereWeek(OffsetDateTime dateTime) throws SQLException {
+    List<Event> selectWhereWeek(OffsetDateTime dateTime) throws SQLException {
         String sql = "SELECT * FROM event WHERE startDateTime BETWEEN ? AND ?";
         OffsetDateTime startOfWeek = dateTime.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
                 .with(ChronoField.NANO_OF_DAY, LocalTime.MIN.toNanoOfDay());

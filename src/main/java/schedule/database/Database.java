@@ -24,11 +24,11 @@ public class Database {
         return eventDB.delete(e);
     }
 
-    public List<Event> selectEventWhereDay(OffsetDateTime dateTime) throws SQLException {
+    public List<Event> selectEventsWhereDay(OffsetDateTime dateTime) throws SQLException {
         return eventDB.selectWhereDay(dateTime);
     }
 
-    public List<Event> selectEventWhereWeek(OffsetDateTime dateTime) throws SQLException {
+    public List<Event> selectEventsWhereWeek(OffsetDateTime dateTime) throws SQLException {
         return eventDB.selectWhereWeek(dateTime);
     }
 

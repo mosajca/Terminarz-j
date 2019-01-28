@@ -14,6 +14,7 @@
 .anchor-pane .label {
     -fx-background-color: green;
     -fx-border-color: black;
+    -fx-border-style: solid none solid none;
     -fx-text-fill: white;
     -fx-padding: 5;
     -fx-min-height: 0;

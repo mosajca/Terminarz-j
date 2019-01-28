@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -29,9 +30,10 @@ public class UpcomingWindow extends Stage {
         super(StageStyle.UTILITY);
         this.database = database;
         setTitle("Nadchodzące wydarzenia");
+        getIcons().add(new Image("icon.png"));
         initModality(Modality.APPLICATION_MODAL);
         setScene(new Scene(new ScrollPane(vbox)));
-        minWidthProperty().bind(titleProperty().length().multiply(10));
+        minWidthProperty().bind(titleProperty().length().multiply(15));
     }
 
     public void showEvents() {
@@ -47,8 +49,8 @@ public class UpcomingWindow extends Stage {
         today = OffsetDateTime.now();
         OffsetDateTime tomorrow = today.plusDays(1);
         try {
-            List<Event> events = database.selectEventWhereDay(today);
-            events.addAll(database.selectEventWhereDay(tomorrow));
+            List<Event> events = database.selectEventsWhereDay(today);
+            events.addAll(database.selectEventsWhereDay(tomorrow));
             return events.stream()
                     .filter(e -> e.getStartDateTime().isAfter(today) && e.getStartDateTime().isBefore(tomorrow))
                     .sorted(Comparator.comparing(Event::getStartDateTime))

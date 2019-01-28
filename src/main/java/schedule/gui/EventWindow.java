@@ -15,6 +15,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
+import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -54,6 +55,7 @@ public class EventWindow extends Stage {
         description.setTextFormatter(new TextFormatter<String>(c -> c.getControlNewText().length() < 512 ? c : null));
         buttons.getStyleClass().add("buttons");
         setTitle("Wydarzenie");
+        getIcons().add(new Image("icon.png"));
         initModality(Modality.APPLICATION_MODAL);
         Scene scene = new Scene(createRoot());
         scene.getStylesheets().add("style.css");
@@ -136,7 +138,7 @@ public class EventWindow extends Stage {
     }
 
     private boolean overlap(Event y) throws SQLException {
-        return database.selectEventWhereDay(y.getStartDateTime()).stream()
+        return database.selectEventsWhereDay(y.getStartDateTime()).stream()
                 .anyMatch(x -> !x.getId().equals(y.getId())
                         && x.getStartDateTime().isBefore(y.getEndDateTime())
                         && y.getStartDateTime().isBefore(x.getEndDateTime()));

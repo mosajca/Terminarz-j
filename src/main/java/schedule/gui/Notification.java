@@ -62,13 +62,13 @@ public class Notification extends Stage {
             OffsetDateTime now = OffsetDateTime.now();
             OffsetDateTime nowPlusMinutes10 = now.plusMinutes(10);
             try {
-                List<Event> events = database.selectEventWhereDay(now);
+                List<Event> events = database.selectEventsWhereDay(now);
                 if (now.getDayOfYear() != nowPlusMinutes10.getDayOfYear()) {
-                    events.addAll(database.selectEventWhereDay(nowPlusMinutes10));
+                    events.addAll(database.selectEventsWhereDay(nowPlusMinutes10));
                 }
                 String str = events.stream()
                         .filter(e -> e.getStartDateTime().isAfter(now)
-                                && e.getStartDateTime().isBefore(now.plusMinutes(10)))
+                                && e.getStartDateTime().isBefore(nowPlusMinutes10))
                         .min(Comparator.comparing(Event::getStartDateTime))
                         .map(e -> e.equals(lastShown) ? null : (lastShown = e))
                         .map(e -> e.getName() + "\no godzinie: " + e.getStartDateTime().toLocalTime().format(dtf))

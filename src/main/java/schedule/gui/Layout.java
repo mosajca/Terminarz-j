@@ -168,7 +168,7 @@ public class Layout extends BorderPane {
                     week = true;
                     weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(true));
                     showWeekDate();
-                    execute(() -> showEvents(database.selectEventWhereWeek(current)));
+                    execute(() -> showEvents(database.selectEventsWhereWeek(current)));
                 }
             });
             HBox.setHgrow(button, Priority.ALWAYS);
@@ -199,7 +199,7 @@ public class Layout extends BorderPane {
             showWeekDate();
             weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(true));
             week = true;
-            execute(() -> showEvents(database.selectEventWhereWeek(current)));
+            execute(() -> showEvents(database.selectEventsWhereWeek(current)));
         });
     }
 
@@ -210,7 +210,7 @@ public class Layout extends BorderPane {
             weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(false));
             weekAnchorPanes.get(current.getDayOfWeek().getValue()).setVisible(true);
             week = false;
-            execute(() -> showEvents(database.selectEventWhereDay(current)));
+            execute(() -> showEvents(database.selectEventsWhereDay(current)));
         });
     }
 
@@ -224,11 +224,11 @@ public class Layout extends BorderPane {
     private void showEvents() throws SQLException {
         weekAnchorPanes.stream().skip(1).forEach(a -> a.setVisible(week));
         if (week) {
-            showEvents(database.selectEventWhereWeek(current));
+            showEvents(database.selectEventsWhereWeek(current));
             showWeekDate();
         } else {
             weekAnchorPanes.get(current.getDayOfWeek().getValue()).setVisible(true);
-            showEvents(database.selectEventWhereDay(current));
+            showEvents(database.selectEventsWhereDay(current));
             date.setText(current.toLocalDate().toString());
         }
     }
@@ -241,9 +241,9 @@ public class Layout extends BorderPane {
     private void refresh() {
         execute(() -> {
             if (week) {
-                showEvents(database.selectEventWhereWeek(current));
+                showEvents(database.selectEventsWhereWeek(current));
             } else {
-                showEvents(database.selectEventWhereDay(current));
+                showEvents(database.selectEventsWhereDay(current));
             }
         });
     }
